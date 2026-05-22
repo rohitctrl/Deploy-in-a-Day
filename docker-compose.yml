@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # --------------------------------------------------------
+  # 1. OPENCLAW (The Personal Assistant & Gateway)
+  # --------------------------------------------------------
+  openclaw:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw_gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080" # Exposed for external messaging webhooks (WhatsApp, Telegram, etc.)
+    environment:
+      # THE ORACLE FIX: Binds to all interfaces so Oracle's VCN firewall can route traffic properly
+      - GATEWAY_BIND=0.0.0.0
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL}
+      - LLM_MODEL=${LLM_MODEL}
+    volumes:
+      - ./data/openclaw:/app/data
+    networks:
+      - agent_swarm
+
+  # --------------------------------------------------------
+  # 2. HERMES AGENT (The Self-Improving Task Engine)
+  # --------------------------------------------------------
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes_core
+    restart: unless-stopped
+    expose:
+      - "8000" # Internal only - Paperclip communicates with Hermes here
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER}
+      - LLM_API_KEY=${LLM_API_KEY}
+      # Prevents cold-start memory initialization crashes on ARM
+      - PRELOAD_MEMORY_VECTORS=true
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL}
+      - LLM_MODEL=${LLM_MODEL} 
+    volumes:
+      # The 3-Layer Memory Architecture mapping
+      - ./data/hermes/working:/app/memory/working
+      - ./data/hermes/semantic:/app/memory/semantic
+      - ./data/hermes/episodic:/app/memory/episodic
+    networks:
+      - agent_swarm
+
+  # --------------------------------------------------------
+  # 3. PAPERCLIP AI (The Orchestrator & React Dashboard)
+  # --------------------------------------------------------
+  paperclip:
+    image: reeoss/paperclipai-paperclip:latest
+    container_name: paperclip_orchestrator
+    restart: unless-stopped
+    ports:
+      - "3000:3000" # Exposed to access the React Dashboard
+    environment:
+      - NODE_ENV=production
+      # Wiring the stack together internally
+      - OPENCLAW_ENDPOINT=http://openclaw:8080
+      - HERMES_ENDPOINT=http://hermes:8000
+      - ADMIN_PASSWORD=${DASHBOARD_PASSWORD}
+    volumes:
+      - ./data/paperclip:/app/database
+    networks:
+      - agent_swarm
+    depends_on:
+      - openclaw
+      - hermes
+
+networks:
+  agent_swarm:
+    driver: bridge
