@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Deploy in a Day — AI Agent Stack on Oracle VPS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #1e1e1e;
+    --accent: #c8f135;
+    --accent2: #3dffa0;
+    --muted: #555;
+    --text: #e8e8e8;
+    --text-dim: #888;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); overflow-x: hidden; cursor: crosshair; }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none; 
+    z-index: 50; /* Lowered to prevent clickjacking block on iframes */
+    opacity: 0.4;
+  }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; 
+    z-index: 200; /* Raised to stay above the videos */
+    padding: 1.2rem 2.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,10,0.88); backdrop-filter: blur(12px);
+  }
+  .nav-logo { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.08em; }
+  .nav-cta { font-family: var(--mono); font-size: 0.75rem; background: var(--accent); color: #000; padding: 0.5rem 1.2rem; text-decoration: none; font-weight: 700; letter-spacing: 0.06em; transition: background 0.2s; cursor: pointer; }
+  .nav-cta:hover { background: var(--accent2); }
+
+  .ticker-wrap { overflow: hidden; background: var(--accent); padding: 0.7rem 0; white-space: nowrap; margin-top: 60px; }
+  .ticker-track { display: inline-block; animation: ticker 18s linear infinite; }
+  .ticker-track span { font-family: var(--mono); font-size: 0.72rem; color: #000; font-weight: 700; letter-spacing: 0.08em; padding: 0 2rem; }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 8rem 2.5rem 4rem; position: relative; overflow: hidden; }
+  .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(200,241,53,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(200,241,53,0.03) 1px, transparent 1px); background-size: 60px 60px; }
+  .hero-glow { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); width: 600px; height: 400px; background: radial-gradient(ellipse, rgba(200,241,53,0.06) 0%, transparent 70%); pointer-events: none; }
+
+  .tag { display: inline-block; font-family: var(--mono); font-size: 0.7rem; color: var(--accent); border: 1px solid var(--accent); padding: 0.3rem 0.7rem; letter-spacing: 0.12em; margin-bottom: 2rem; opacity: 0; animation: fadeUp 0.6s 0.1s forwards; }
+  .hero h1 { font-size: clamp(3rem, 8vw, 7rem); font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; max-width: 900px; opacity: 0; animation: fadeUp 0.7s 0.25s forwards; }
+  .hero h1 em { font-style: normal; color: var(--accent); display: block; }
+  .hero-sub { margin-top: 2rem; font-size: 1.1rem; color: var(--text-dim); max-width: 560px; line-height: 1.7; font-weight: 400; opacity: 0; animation: fadeUp 0.7s 0.4s forwards; }
+  .hero-actions { margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.7s 0.55s forwards; }
+
+  .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--accent); color: #000; font-family: var(--mono); font-size: 0.8rem; font-weight: 700; padding: 1rem 2rem; text-decoration: none; letter-spacing: 0.06em; transition: all 0.2s; }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border); color: var(--text-dim); font-family: var(--mono); font-size: 0.8rem; padding: 1rem 2rem; text-decoration: none; letter-spacing: 0.06em; transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  .hero-stat-row { margin-top: 4rem; display: flex; gap: 3rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.7s 0.7s forwards; }
+  .stat-num { font-family: var(--mono); font-size: 1.8rem; color: var(--accent); font-weight: 700; }
+  .stat-label { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2rem; letter-spacing: 0.06em; }
+
+  .section { padding: 6rem 2.5rem; max-width: 1200px; margin: 0 auto; }
+  .section-label { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.15em; margin-bottom: 1rem; }
+  .section-title { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin-bottom: 3.5rem; }
+
+  /* TOOL CARDS */
+  .tools-section { padding: 6rem 2.5rem; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .tools-inner { max-width: 1200px; margin: 0 auto; }
+
+  .tool-card { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; padding: 4rem 0; border-bottom: 1px solid var(--border); }
+  .tool-card:last-child { border-bottom: none; }
+  .tool-card.reverse { direction: rtl; }
+  .tool-card.reverse > * { direction: ltr; }
+
+  @media (max-width: 768px) {
+    .tool-card { grid-template-columns: 1fr; direction: ltr; }
+    .tool-card.reverse { direction: ltr; }
+  }
+
+  .tool-meta { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .tool-badge { font-family: var(--mono); font-size: 0.65rem; border: 1px solid var(--border); color: var(--text-dim); padding: 0.25rem 0.6rem; letter-spacing: 0.1em; }
+  .tool-badge.accent { border-color: var(--accent); color: var(--accent); }
+  .tool-stars { font-family: var(--mono); font-size: 0.7rem; color: var(--accent2); letter-spacing: 0.06em; }
+
+  .tool-name { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+  .tool-tagline { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1.5rem; line-height: 1.6; }
+  .tool-desc { font-size: 0.875rem; color: var(--text-dim); line-height: 1.8; margin-bottom: 1.5rem; }
+
+  .tool-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .pill { font-family: var(--mono); font-size: 0.65rem; background: #161616; border: 1px solid var(--border); color: var(--text-dim); padding: 0.3rem 0.7rem; letter-spacing: 0.08em; }
+
+  .tool-link { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--mono); font-size: 0.7rem; color: var(--accent); text-decoration: none; letter-spacing: 0.08em; margin-top: 1.2rem; transition: gap 0.2s; }
+  .tool-link:hover { gap: 0.8rem; }
+
+  /* VIDEO FIX: z-index and position added to pop over the noise filter */
+  .video-wrap { 
+    width: 100%; aspect-ratio: 16/9; background: #000; 
+    border: 1px solid var(--border); overflow: hidden; 
+    position: relative; z-index: 100; 
+  }
+  .video-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+  .video-label { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 0.08em; margin-top: 0.6rem; }
+
+  /* OVERVIEW VIDEO FIX */
+  .overview-video-section { padding: 5rem 2.5rem; max-width: 900px; margin: 0 auto; }
+  .overview-video-wrap { 
+    width: 100%; aspect-ratio: 16/9; background: #000; 
+    border: 1px solid var(--border); overflow: hidden; 
+    position: relative; z-index: 100; 
+  }
+  .overview-video-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  /* INCLUDES */
+  .includes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+  .include-card { background: var(--surface); padding: 2rem; position: relative; overflow: hidden; transition: background 0.2s; }
+  .include-card:hover { background: #161616; }
+  .include-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 0.3s; }
+  .include-card:hover::before { transform: scaleX(1); }
+  .card-num { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 1.2rem; }
+  .card-icon { font-size: 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.6rem; letter-spacing: -0.01em; }
+  .card-desc { font-size: 0.82rem; color: var(--text-dim); line-height: 1.7; }
+
+  /* PRICING */
+  .pricing-section { padding: 6rem 2.5rem; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .pricing-inner { max-width: 900px; margin: 0 auto; }
+  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+  @media (max-width: 640px) { .pricing-grid { grid-template-columns: 1fr; } }
+  .price-card { background: var(--bg); padding: 2.5rem; display: flex; flex-direction: column; gap: 1rem; }
+  .price-card.featured { background: #0f110a; }
+  .price-badge { display: inline-block; font-family: var(--mono); font-size: 0.65rem; background: var(--accent); color: #000; padding: 0.2rem 0.6rem; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 0.5rem; width: fit-content; }
+  .price-name { font-size: 0.75rem; font-family: var(--mono); color: var(--text-dim); letter-spacing: 0.1em; }
+  .price-amount { font-size: 3.5rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; color: var(--accent); }
+  .price-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; flex: 1; }
+  .price-features { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+  .price-features li { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); display: flex; gap: 0.6rem; }
+  .price-features li::before { content: '+'; color: var(--accent); font-weight: 700; }
+  .price-cta { display: block; text-align: center; padding: 0.9rem; font-family: var(--mono); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-decoration: none; transition: all 0.2s; margin-top: 0.5rem; }
+  .price-card.featured .price-cta { background: var(--accent); color: #000; }
+  .price-card.featured .price-cta:hover { background: var(--accent2); }
+  .price-card:not(.featured) .price-cta { border: 1px solid var(--border); color: var(--text-dim); }
+  .price-card:not(.featured) .price-cta:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* FAQ */
+  .faq-list { display: flex; flex-direction: column; border-top: 1px solid var(--border); }
+  .faq-item { border-bottom: 1px solid var(--border); padding: 1.8rem 0; cursor: pointer; }
+  .faq-q { display: flex; justify-content: space-between; align-items: start; gap: 1rem; font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; }
+  .faq-toggle { font-family: var(--mono); color: var(--accent); font-size: 1.2rem; line-height: 1; flex-shrink: 0; transition: transform 0.3s; }
+  .faq-item.open .faq-toggle { transform: rotate(45deg); }
+  .faq-a { font-size: 0.875rem; color: var(--text-dim); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, margin-top 0.3s; }
+  .faq-item.open .faq-a { max-height: 300px; margin-top: 1rem; }
+
+  footer { padding: 3rem 2.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+  .footer-logo { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
+  .footer-note { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* TERMINAL */
+  .terminal-wrap { padding: 4rem 2.5rem; display: flex; justify-content: center; }
+  .terminal { width: 100%; max-width: 700px; background: #0d0d0d; border: 1px solid var(--border); font-family: var(--mono); font-size: 0.82rem; }
+  .term-header { background: #161616; padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; } .dot.y { background: #ffbd2e; } .dot.g { background: #28c941; }
+  .term-title { margin-left: auto; margin-right: auto; font-size: 0.7rem; color: var(--muted); letter-spacing: 0.08em; }
+  .term-body { padding: 1.5rem; line-height: 2; }
+  .term-line { display: block; }
+  .prompt { color: var(--accent); } .cmd { color: #fff; } .out { color: var(--text-dim); } .success { color: var(--accent2); }
+  .cursor { display: inline-block; width: 8px; height: 14px; background: var(--accent); vertical-align: middle; animation: blink 1s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">// DEPLOY_IN_A_DAY.kit</span>
+  <a href="#pricing" class="nav-cta">GET THE KIT</a>
+</nav>
+
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <span>OPENCLAW 🦞 295K+ STARS</span><span>&bull;</span>
+    <span>HERMES AGENT 90K+ STARS</span><span>&bull;</span>
+    <span>PAPERCLIPAI 42K+ STARS</span><span>&bull;</span>
+    <span>ORACLE FREE TIER &mdash; ZERO MONTHLY COST</span><span>&bull;</span>
+    <span>DEPLOY IN ONE DAY</span><span>//</span>
+    <span>OPENCLAW 🦞 295K+ STARS</span><span>&bull;</span>
+    <span>HERMES AGENT 90K+ STARS</span><span>&bull;</span>
+    <span>PAPERCLIPAI 42K+ STARS</span><span>&bull;</span>
+    <span>ORACLE FREE TIER &mdash; ZERO MONTHLY COST</span><span>&bull;</span>
+    <span>DEPLOY IN ONE DAY</span><span>//</span>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <span class="tag">ONE TIME PURCHASE &mdash; NO SUBSCRIPTION</span>
+  <h1>Skip the<br/><em>setup hell.</em></h1>
+  <p class="hero-sub">OpenClaw, Hermes Agent, and PaperclipAI pre-configured, pre-wired, and ready to deploy on Oracle Free Tier ARM. No config rabbit holes. No broken compose files. No 3am Stack Overflow sessions.</p>
+  <div class="hero-actions">
+    <a href="#pricing" class="btn-primary">&#x2192; Get the Kit &mdash; $39</a>
+    <a href="#tools" class="btn-secondary">Meet the stack</a>
+  </div>
+  <div class="hero-stat-row">
+    <div class="stat"><div class="stat-num">1 day</div><div class="stat-label">TO FULL DEPLOY</div></div>
+    <div class="stat"><div class="stat-num">$0/mo</div><div class="stat-label">ORACLE FREE TIER INFRA</div></div>
+    <div class="stat"><div class="stat-num">427K+</div><div class="stat-label">COMBINED GITHUB STARS</div></div>
+  </div>
+</section>
+
+<div class="terminal-wrap">
+  <div class="terminal">
+    <div class="term-header">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="term-title">oracle-vps-arm &mdash; bash</span>
+    </div>
+    <div class="term-body">
+      <span class="term-line"><span class="prompt">$ </span><span class="cmd">git clone your-agent-kit && cd deploy</span></span>
+      <span class="term-line"><span class="out">&gt; Pre-configured stack loaded...</span></span>
+      <span class="term-line"><span class="prompt">$ </span><span class="cmd">docker compose up -d</span></span>
+      <span class="term-line"><span class="out">&gt; Starting openclaw gateway... </span><span class="success">done</span></span>
+      <span class="term-line"><span class="out">&gt; Starting hermes-agent... </span><span class="success">done</span></span>
+      <span class="term-line"><span class="out">&gt; Starting paperclipai... </span><span class="success">done</span></span>
+      <span class="term-line"><span class="out">&gt; All services healthy. Stack online.</span></span>
+      <span class="term-line"><span class="prompt">$ </span><span class="cursor"></span></span>
+    </div>
+  </div>
+</div>
+
+<div class="overview-video-section">
+  <p class="section-label" style="text-align:center; margin-bottom:1rem;">// WATCH THE FULL STACK IN ACTION</p>
+  <h2 style="text-align:center; font-size:1.5rem; font-weight:800; letter-spacing:-0.02em; margin-bottom:2rem; color:var(--text-dim);">OpenClaw + Hermes + PaperclipAI together, explained.</h2>
+  <div class="overview-video-wrap">
+    <iframe src="https://www.youtube.com/embed/iNxNkvZfNHM" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy" title="PaperClip + OpenClaw + Hermes Agent Stack Demo"></iframe>
+  </div>
+  <p class="video-label" style="text-align:center; margin-top:0.8rem;">PaperClip + OpenClaw + Hermes Agent: The Ultimate Open Source Swarm Intelligence Setup</p>
+</div>
+
+<div class="tools-section" id="tools">
+  <div class="tools-inner">
+    <p class="section-label">// THE STACK</p>
+    <h2 class="section-title">Three tools.<br/>One working system.</h2>
+    <p style="font-size:0.9rem; color:var(--text-dim); max-width:600px; line-height:1.8; margin-bottom:4rem;">Each tool in this stack solves a different problem. Together they form a complete autonomous agent infrastructure — personal assistant layer, self-improving agent core, and multi-agent orchestration — all running on hardware you own.</p>
+
+    <div class="tool-card">
+      <div>
+        <div class="tool-meta">
+          <span class="tool-badge accent">OPENCLAW</span>
+          <span class="tool-badge">MIT LICENSE</span>
+          <span class="tool-stars">⭐ 295K+ GitHub Stars</span>
+        </div>
+        <h3 class="tool-name">OpenClaw 🦞</h3>
+        <p class="tool-tagline">Your personal AI assistant. Any OS. Any platform. The lobster way.</p>
+        <p class="tool-desc">Created by Peter Steinberger, OpenClaw is a self-hosted personal AI agent that connects large language models to the messaging apps you already use. It runs as a persistent gateway daemon and answers you on WhatsApp, Telegram, Slack, Discord, iMessage, and 20+ other platforms from a single inbox. It can execute shell commands, manage files, browse the web, and run 100+ AgentSkills autonomously. It reached 100K GitHub stars faster than any repo in history.</p>
+        <p class="tool-desc" style="color:#555; font-size:0.78rem;">The Oracle ARM config gotcha: OpenClaw's gateway.bind defaults need adjusting for Oracle's two-layer firewall. This is the most common failure point for first-time deployers and is covered step-by-step in the kit.</p>
+        <div class="tool-pills">
+          <span class="pill">25+ MESSAGING CHANNELS</span>
+          <span class="pill">100+ AGENT SKILLS</span>
+          <span class="pill">VOICE WAKE</span>
+          <span class="pill">LIVE CANVAS</span>
+          <span class="pill">LOCAL MODELS</span>
+          <span class="pill">DOCKER READY</span>
+        </div>
+        <a href="https://openclaw.ai" target="_blank" class="tool-link">openclaw.ai &#x2192;</a>
+      </div>
+      <div>
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/5vRSAMA6qOc" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy" title="OpenClaw AI Agent Landscape 2026"></iframe>
+        </div>
+        <p class="video-label">2026 AI Agent Landscape: Where OpenClaw fits in your stack</p>
+      </div>
+    </div>
+
+    <div class="tool-card reverse">
+      <div>
+        <div class="tool-meta">
+          <span class="tool-badge accent">HERMES AGENT</span>
+          <span class="tool-badge">APACHE 2.0</span>
+          <span class="tool-stars">⭐ 90K+ GitHub Stars</span>
+        </div>
+        <h3 class="tool-name">Hermes Agent</h3>
+        <p class="tool-tagline">The self-improving AI agent by Nous Research. Gets smarter every session.</p>
+        <p class="tool-desc">Built by Nous Research (the lab behind the Hermes model family), Hermes Agent is an autonomous task-execution framework that runs persistently on your server. Unlike session-based AI tools that start fresh every time, Hermes maintains three layers of memory: working memory for current tasks, long-term semantic memory for preferences, and episodic skill logs for recurring workflows. It writes reusable Skill Documents after solving complex tasks so it doesn't re-derive the same solution twice.</p>
+        <p class="tool-desc" style="color:#555; font-size:0.78rem;">Runs comfortably on Oracle Free Tier's 24GB ARM instance. Supports Anthropic, OpenAI, and local models via Ollama. The kit includes model routing config that prevents cold-start memory issues on first boot.</p>
+        <div class="tool-pills">
+          <span class="pill">3-LAYER MEMORY</span>
+          <span class="pill">40+ BUILT-IN TOOLS</span>
+          <span class="pill">SELF-IMPROVING</span>
+          <span class="pill">MCP SUPPORT</span>
+          <span class="pill">TELEGRAM / DISCORD</span>
+          <span class="pill">ANY LLM BACKEND</span>
+        </div>
+        <a href="https://hermesagent.agency" target="_blank" class="tool-link">hermesagent.agency &#x2192;</a>
+      </div>
+      <div>
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/0eDKCqXtq8o" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy" title="Hermes + OpenClaw + Paperclip demo"></iframe>
+        </div>
+        <p class="video-label">Hermes + OpenClaw + Paperclip: Live demo and stack walkthrough</p>
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div>
+        <div class="tool-meta">
+          <span class="tool-badge accent">PAPERCLIPAI</span>
+          <span class="tool-badge">MIT LICENSE</span>
+          <span class="tool-stars">⭐ 42K+ GitHub Stars</span>
+        </div>
+        <h3 class="tool-name">PaperclipAI</h3>
+        <p class="tool-tagline">If OpenClaw is the employee, Paperclip is the company.</p>
+        <p class="tool-desc">Built by pseudonymous developer @dotta after "losing track of 30 Claude Code windows," PaperclipAI is an open-source Node.js server and React dashboard that orchestrates teams of AI agents into structured organizations. Agents get roles, reporting lines, per-agent budgets, and task queues. An audit log traces every decision. A board approval workflow lets you approve agent hires and override strategy. It crossed 38K GitHub stars in under four weeks, one of the fastest-growing open-source AI projects of 2026.</p>
+        <p class="tool-desc" style="color:#555; font-size:0.78rem;">The self-hosted only requirement makes Oracle VPS the ideal home for Paperclip. The kit configures the React dashboard to be accessible via a reverse proxy so you can monitor your agent org from any browser.</p>
+        <div class="tool-pills">
+          <span class="pill">ORG CHARTS</span>
+          <span class="pill">BUDGET ENFORCEMENT</span>
+          <span class="pill">AUDIT LOG</span>
+          <span class="pill">CRON TRIGGERS</span>
+          <span class="pill">REACT DASHBOARD</span>
+          <span class="pill">BOARD APPROVALS</span>
+        </div>
+        <a href="https://paperclip.ing" target="_blank" class="tool-link">paperclip.ing &#x2192;</a>
+      </div>
+      <div>
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/C3-4llQYT8o" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy" title="Paperclip: Hire AI Agents Like Employees Live Demo"></iframe>
+        </div>
+        <p class="video-label">Paperclip live demo with @dotta: Hire AI agents like employees</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<section class="section" id="includes">
+  <p class="section-label">// WHAT YOU GET</p>
+  <h2 class="section-title">Everything in<br/>the kit.</h2>
+  <div class="includes-grid">
+    <div class="include-card">
+      <div class="card-num">01</div>
+      <div class="card-icon">&#x2699;</div>
+      <div class="card-title">Pre-configured YAML Stack</div>
+      <div class="card-desc">All three tools wired together and tuned for Oracle Free Tier ARM (Ampere A1). Includes the gateway.bind fix, memory routing config, and dashboard proxy setup. Copy, paste, run.</div>
+    </div>
+    <div class="include-card">
+      <div class="card-num">02</div>
+      <div class="card-icon">&#x1F4C4;</div>
+      <div class="card-title">Written Setup Guide</div>
+      <div class="card-desc">Step-by-step from Oracle account provisioning to first successful agent run. Covers the two-layer Oracle firewall, Docker install on ARM, and model API key routing.</div>
+    </div>
+    <div class="include-card">
+      <div class="card-num">03</div>
+      <div class="card-icon">&#x1F3A5;</div>
+      <div class="card-title">Video Walkthrough</div>
+      <div class="card-desc">Screen-recorded run through the full deploy flow. Every command, every config, every expected output. Roughly 10 minutes end to end.</div>
+    </div>
+    <div class="include-card">
+      <div class="card-num">04</div>
+      <div class="card-icon">&#x1F6A8;</div>
+      <div class="card-title">Troubleshooting FAQ</div>
+      <div class="card-desc">The 6 most common errors on this exact stack and how to fix each one: Oracle firewall silently dropping traffic, Hermes memory init failures, Paperclip dashboard 502s, and more.</div>
+    </div>
+  </div>
+</section>
+
+<div class="pricing-section" id="pricing">
+  <div class="pricing-inner">
+    <p class="section-label">// PRICING</p>
+    <h2 class="section-title" style="margin-bottom:2.5rem">One price.<br/>No recurring fees.</h2>
+    <div class="pricing-grid">
+      <div class="price-card featured">
+        <span class="price-badge">MOST POPULAR</span>
+        <span class="price-name">THE FULL KIT</span>
+        <div class="price-amount">$39</div>
+        <p class="price-desc">Everything you need to go from zero to a running OpenClaw + Hermes + PaperclipAI stack on Oracle Free Tier in a single day.</p>
+        <ul class="price-features">
+          <li>Pre-configured YAML stack</li>
+          <li>Written setup guide</li>
+          <li>Full video walkthrough</li>
+          <li>Troubleshooting FAQ</li>
+          <li>Lifetime access to updates</li>
+        </ul>
+        <a href="https://rohitverse706.gumroad.com/l/sgphw" class="price-cta">BUY NOW ON GUMROAD</a>
+      </div>
+      <div class="price-card">
+        <span class="price-name">DONE WITH YOU</span>
+        <div class="price-amount" style="color:var(--text)">$129</div>
+        <p class="price-desc">Everything in the Kit plus a 30-minute live screen share where we deploy the stack together on your VPS. You leave with it running.</p>
+        <ul class="price-features">
+          <li>Everything in the Full Kit</li>
+          <li>30-min 1-on-1 screen share</li>
+          <li>Live deploy session</li>
+          <li>Config tweaks for your setup</li>
+          <li>30 days async support</li>
+        </ul>
+        <a href="#" class="price-cta">BOOK A CALL</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <p class="section-label">// FAQ</p>
+  <h2 class="section-title" style="margin-bottom:2.5rem">Questions.</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q"><span>Do I need a paid Oracle account?</span><span class="faq-toggle">+</span></div>
+      <div class="faq-a">No. The stack is optimized for Oracle Cloud Always Free Tier, specifically the ARM-based Ampere A1 instances (4 OCPU, 24GB RAM). The guide covers Oracle account creation from scratch including how to provision the right instance type and navigate the two-layer firewall config.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span>Which LLM API does this require?</span><span class="faq-toggle">+</span></div>
+      <div class="faq-a">The config supports Anthropic, OpenAI, and local models via Ollama. You bring your own API key. The guide includes a recommended model routing setup and covers how to configure local-only inference if you want zero ongoing API costs.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span>What experience level do I need?</span><span class="faq-toggle">+</span></div>
+      <div class="faq-a">Comfort with a terminal and SSH is enough. You do not need to be a DevOps engineer. The guide is written for developers who know the basics but have not self-hosted a multi-tool agent stack before.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span>Is this a subscription?</span><span class="faq-toggle">+</span></div>
+      <div class="faq-a">No. One-time payment. Lifetime access to the kit including any future config updates as the underlying tools release new versions.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span>What if I get stuck?</span><span class="faq-toggle">+</span></div>
+      <div class="faq-a">The Troubleshooting FAQ covers the most common failure points specific to this stack on Oracle ARM. If you are still stuck, upgrading to the Done With You plan gets you a live 30-minute screen share.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span>Can I get a refund?</span><span class="faq-toggle">+</span></div>
+      <div class="faq-a">Yes. If the kit does not work for your setup and the troubleshooting guide cannot resolve it, email within 7 days for a full refund. No questions asked.</div>
+    </div>
+  </div>
+</section>
+
+<div style="padding:5rem 2.5rem; text-align:center; border-top: 1px solid var(--border); background: var(--surface);">
+  <p style="font-family:var(--mono); font-size:0.7rem; color:var(--accent); letter-spacing:0.15em; margin-bottom:1rem;">// READY?</p>
+  <h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:800; letter-spacing:-0.03em; margin-bottom:2rem; line-height:1;">Stop configuring.<br/>Start building.</h2>
+  <a href="#pricing" class="btn-primary" style="font-size:0.85rem; padding:1.2rem 2.5rem;">&#x2192; Get the Kit for $39</a>
+</div>
+
+<footer>
+  <span class="footer-logo">// DEPLOY_IN_A_DAY</span>
+  <span class="footer-note">ONE-TIME PURCHASE &mdash; NO SUBSCRIPTION &mdash; LIFETIME ACCESS</span>
+</footer>
+
+<script>
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+</script>
+
+</body>
+</html>
