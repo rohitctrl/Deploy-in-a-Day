@@ -1,0 +1,10 @@
+/* TEAM */
+Site: Deploy in a Day
+Built by: the Deploy in a Day crew
+Stack: OpenClaw, Hermes, Paperclip — dockerized, wired, shipped.
+
+/* SITE */
+Last update: 2026
+Language: English
+Doctype: HTML5
+Components: Vanilla HTML/CSS/JS
