@@ -40,54 +40,70 @@
   html { scroll-behavior: smooth; }
   body { background: var(--bg); color: var(--text); font-family: var(--sans); overflow-x: hidden; cursor: crosshair; }
 
+  .skip-link {
+    position: absolute; top: -40px; left: 1rem; z-index: 300;
+    background: var(--accent); color: #000; font-family: var(--mono);
+    font-size: 0.75rem; font-weight: 700; padding: 0.6rem 1rem; text-decoration: none;
+    transition: top 0.2s;
+  }
+  .skip-link:focus { top: 1rem; }
+
+  a:focus-visible, button:focus-visible, .faq-item:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 3px;
+  }
+
   body::before {
     content: '';
     position: fixed; inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
-    pointer-events: none; 
-    z-index: 50; /* Lowered to prevent clickjacking block on iframes */
+    pointer-events: none;
+    z-index: 50;
     opacity: 0.4;
   }
 
   nav {
-    position: fixed; top: 0; left: 0; right: 0; 
-    z-index: 200; /* Raised to stay above the videos */
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 200;
     padding: 1.2rem 2.5rem;
     display: flex; justify-content: space-between; align-items: center;
     border-bottom: 1px solid var(--border);
     background: rgba(10,10,10,0.88); backdrop-filter: blur(12px);
   }
   .nav-logo { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.08em; }
-  .nav-cta { font-family: var(--mono); font-size: 0.75rem; background: var(--accent); color: #000; padding: 0.5rem 1.2rem; text-decoration: none; font-weight: 700; letter-spacing: 0.06em; transition: background 0.2s; cursor: pointer; }
+  .nav-cta { font-family: var(--mono); font-size: 0.75rem; background: var(--accent); color: #000; padding: 0.5rem 1.2rem; text-decoration: none; font-weight: 700; letter-spacing: 0.06em; transition: background 0.2s, transform 0.1s; cursor: pointer; }
   .nav-cta:hover { background: var(--accent2); }
+  .nav-cta:active { transform: scale(0.97); }
 
   .ticker-wrap { overflow: hidden; background: var(--accent); padding: 0.7rem 0; white-space: nowrap; margin-top: 60px; }
   .ticker-track { display: inline-block; animation: ticker 18s linear infinite; }
   .ticker-track span { font-family: var(--mono); font-size: 0.72rem; color: #000; font-weight: 700; letter-spacing: 0.08em; padding: 0 2rem; }
   @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-  .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 8rem 2.5rem 4rem; position: relative; overflow: hidden; }
+  .hero { min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; padding: 8rem 2.5rem 4rem; position: relative; overflow: hidden; }
   .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(200,241,53,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(200,241,53,0.03) 1px, transparent 1px); background-size: 60px 60px; }
   .hero-glow { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); width: 600px; height: 400px; background: radial-gradient(ellipse, rgba(200,241,53,0.06) 0%, transparent 70%); pointer-events: none; }
 
   .tag { display: inline-block; font-family: var(--mono); font-size: 0.7rem; color: var(--accent); border: 1px solid var(--accent); padding: 0.3rem 0.7rem; letter-spacing: 0.12em; margin-bottom: 2rem; opacity: 0; animation: fadeUp 0.6s 0.1s forwards; }
-  .hero h1 { font-size: clamp(3rem, 8vw, 7rem); font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; max-width: 900px; opacity: 0; animation: fadeUp 0.7s 0.25s forwards; }
+  .hero h1 { font-size: clamp(3rem, 8vw, 7rem); font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; max-width: 900px; text-wrap: balance; opacity: 0; animation: fadeUp 0.7s 0.25s forwards; }
   .hero h1 em { font-style: normal; color: var(--accent); display: block; }
   .hero-sub { margin-top: 2rem; font-size: 1.1rem; color: var(--text-dim); max-width: 560px; line-height: 1.7; font-weight: 400; opacity: 0; animation: fadeUp 0.7s 0.4s forwards; }
   .hero-actions { margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.7s 0.55s forwards; }
 
   .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--accent); color: #000; font-family: var(--mono); font-size: 0.8rem; font-weight: 700; padding: 1rem 2rem; text-decoration: none; letter-spacing: 0.06em; transition: all 0.2s; }
   .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(0) scale(0.98); }
   .btn-secondary { display: inline-flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border); color: var(--text-dim); font-family: var(--mono); font-size: 0.8rem; padding: 1rem 2rem; text-decoration: none; letter-spacing: 0.06em; transition: all 0.2s; }
   .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-secondary:active { transform: scale(0.98); }
 
   .hero-stat-row { margin-top: 4rem; display: flex; gap: 3rem; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.7s 0.7s forwards; }
-  .stat-num { font-family: var(--mono); font-size: 1.8rem; color: var(--accent); font-weight: 700; }
+  .stat-num { font-family: var(--mono); font-size: 1.8rem; color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
   .stat-label { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2rem; letter-spacing: 0.06em; }
 
   .section { padding: 6rem 2.5rem; max-width: 1200px; margin: 0 auto; }
   .section-label { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.15em; margin-bottom: 1rem; }
-  .section-title { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin-bottom: 3.5rem; }
+  .section-title { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin-bottom: 3.5rem; text-wrap: balance; }
+  .section-title.tight { margin-bottom: 2.5rem; }
 
   /* TOOL CARDS */
   .tools-section { padding: 6rem 2.5rem; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -106,9 +122,9 @@
   .tool-meta { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
   .tool-badge { font-family: var(--mono); font-size: 0.65rem; border: 1px solid var(--border); color: var(--text-dim); padding: 0.25rem 0.6rem; letter-spacing: 0.1em; }
   .tool-badge.accent { border-color: var(--accent); color: var(--accent); }
-  .tool-stars { font-family: var(--mono); font-size: 0.7rem; color: var(--accent2); letter-spacing: 0.06em; }
+  .tool-stars { font-family: var(--mono); font-size: 0.7rem; color: var(--accent2); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
 
-  .tool-name { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+  .tool-name { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; text-wrap: balance; }
   .tool-tagline { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1.5rem; line-height: 1.6; }
   .tool-desc { font-size: 0.875rem; color: var(--text-dim); line-height: 1.8; margin-bottom: 1.5rem; }
 
@@ -118,8 +134,7 @@
   .tool-link { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--mono); font-size: 0.7rem; color: var(--accent); text-decoration: none; letter-spacing: 0.08em; margin-top: 1.2rem; transition: gap 0.2s; }
   .tool-link:hover { gap: 0.8rem; }
 
-  /* VIDEO FIX: z-index and position added to pop over the noise filter */
-  .video-wrap { 
+  .video-wrap {
     width: 100%; aspect-ratio: 16/9; background: #000; 
     border: 1px solid var(--border); overflow: hidden; 
     position: relative; z-index: 100; 
@@ -156,7 +171,7 @@
   .price-card.featured { background: #0f110a; }
   .price-badge { display: inline-block; font-family: var(--mono); font-size: 0.65rem; background: var(--accent); color: #000; padding: 0.2rem 0.6rem; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 0.5rem; width: fit-content; }
   .price-name { font-size: 0.75rem; font-family: var(--mono); color: var(--text-dim); letter-spacing: 0.1em; }
-  .price-amount { font-size: 3.5rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; color: var(--accent); }
+  .price-amount { font-size: 3.5rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; color: var(--accent); font-variant-numeric: tabular-nums; }
   .price-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; flex: 1; }
   .price-features { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
   .price-features li { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); display: flex; gap: 0.6rem; }
@@ -166,6 +181,7 @@
   .price-card.featured .price-cta:hover { background: var(--accent2); }
   .price-card:not(.featured) .price-cta { border: 1px solid var(--border); color: var(--text-dim); }
   .price-card:not(.featured) .price-cta:hover { border-color: var(--accent); color: var(--accent); }
+  .price-cta:active { transform: scale(0.98); }
 
   /* FAQ */
   .faq-list { display: flex; flex-direction: column; border-top: 1px solid var(--border); }
@@ -175,6 +191,15 @@
   .faq-item.open .faq-toggle { transform: rotate(45deg); }
   .faq-a { font-size: 0.875rem; color: var(--text-dim); line-height: 1.8; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, margin-top 0.3s; }
   .faq-item.open .faq-a { max-height: 300px; margin-top: 1rem; }
+
+  .overview-heading { text-align: center; margin-bottom: 1rem; }
+  .overview-subhead { text-align: center; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 2rem; color: var(--text-dim); text-wrap: balance; }
+  .overview-video-wrap + .video-label { text-align: center; margin-top: 0.8rem; }
+
+  .closing-section { padding: 5rem 2.5rem; text-align: center; border-top: 1px solid var(--border); background: var(--surface); }
+  .closing-label { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.15em; margin-bottom: 1rem; }
+  .closing-title { font-size: clamp(2rem, 5vw, 4rem); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 2rem; line-height: 1; text-wrap: balance; }
+  .closing-cta { font-size: 0.85rem; padding: 1.2rem 2.5rem; }
 
   footer { padding: 3rem 2.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
   .footer-logo { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
@@ -198,6 +223,8 @@
 </head>
 <body>
 
+<a href="#main-content" class="skip-link">Skip to content</a>
+
 <nav>
   <span class="nav-logo">// DEPLOY_IN_A_DAY.kit</span>
   <a href="#pricing" class="nav-cta">GET THE KIT</a>
@@ -218,7 +245,7 @@
   </div>
 </div>
 
-<section class="hero">
+<section class="hero" id="main-content">
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
   <span class="tag">ONE TIME PURCHASE &mdash; NO SUBSCRIPTION</span>
@@ -255,15 +282,15 @@
 </div>
 
 <div class="overview-video-section">
-  <p class="section-label" style="text-align:center; margin-bottom:1rem;">// WATCH THE FULL STACK IN ACTION</p>
-  <h2 style="text-align:center; font-size:1.5rem; font-weight:800; letter-spacing:-0.02em; margin-bottom:2rem; color:var(--text-dim);">OpenClaw + Hermes + PaperclipAI together, explained.</h2>
+  <p class="section-label overview-heading">// WATCH THE FULL STACK IN ACTION</p>
+  <h2 class="overview-subhead">OpenClaw + Hermes + PaperclipAI together, explained.</h2>
   <div class="overview-video-wrap">
     <iframe src="https://www.youtube.com/embed/iNxNkvZfNHM" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy" title="PaperClip + OpenClaw + Hermes Agent Stack Demo"></iframe>
   </div>
-  <p class="video-label" style="text-align:center; margin-top:0.8rem;">PaperClip + OpenClaw + Hermes Agent: The Ultimate Open Source Swarm Intelligence Setup</p>
+  <p class="video-label">PaperClip + OpenClaw + Hermes Agent: The Ultimate Open Source Swarm Intelligence Setup</p>
 </div>
 
-<div class="tools-section" id="tools">
+<section class="tools-section" id="tools">
   <div class="tools-inner">
     <p class="section-label">// THE STACK</p>
     <h2 class="section-title">Three tools.<br/>One working system.</h2>
@@ -288,7 +315,7 @@
           <span class="pill">LOCAL MODELS</span>
           <span class="pill">DOCKER READY</span>
         </div>
-        <a href="https://openclaw.ai" target="_blank" class="tool-link">openclaw.ai &#x2192;</a>
+        <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer" class="tool-link">openclaw.ai &#x2192;</a>
       </div>
       <div>
         <div class="video-wrap">
@@ -317,7 +344,7 @@
           <span class="pill">TELEGRAM / DISCORD</span>
           <span class="pill">ANY LLM BACKEND</span>
         </div>
-        <a href="https://hermesagent.agency" target="_blank" class="tool-link">hermesagent.agency &#x2192;</a>
+        <a href="https://hermesagent.agency" target="_blank" rel="noopener noreferrer" class="tool-link">hermesagent.agency &#x2192;</a>
       </div>
       <div>
         <div class="video-wrap">
@@ -346,7 +373,7 @@
           <span class="pill">REACT DASHBOARD</span>
           <span class="pill">BOARD APPROVALS</span>
         </div>
-        <a href="https://paperclip.ing" target="_blank" class="tool-link">paperclip.ing &#x2192;</a>
+        <a href="https://paperclip.ing" target="_blank" rel="noopener noreferrer" class="tool-link">paperclip.ing &#x2192;</a>
       </div>
       <div>
         <div class="video-wrap">
@@ -357,7 +384,7 @@
     </div>
 
   </div>
-</div>
+</section>
 
 <section class="section" id="includes">
   <p class="section-label">// WHAT YOU GET</p>
@@ -390,7 +417,7 @@
   </div>
 </section>
 
-<div class="pricing-section" id="pricing">
+<section class="pricing-section" id="pricing">
   <div class="pricing-inner">
     <p class="section-label">// PRICING</p>
     <h2 class="section-title" style="margin-bottom:2.5rem">One price.<br/>No recurring fees.</h2>
@@ -420,11 +447,11 @@
           <li>Config tweaks for your setup</li>
           <li>30 days async support</li>
         </ul>
-        <a href="#" class="price-cta">BOOK A CALL</a>
+        <a href="https://cal.com/rohit.k" target="_blank" rel="noopener noreferrer" class="price-cta">BOOK A CALL</a>
       </div>
     </div>
   </div>
-</div>
+</section>
 
 <section class="section">
   <p class="section-label">// FAQ</p>
@@ -457,11 +484,11 @@
   </div>
 </section>
 
-<div style="padding:5rem 2.5rem; text-align:center; border-top: 1px solid var(--border); background: var(--surface);">
-  <p style="font-family:var(--mono); font-size:0.7rem; color:var(--accent); letter-spacing:0.15em; margin-bottom:1rem;">// READY?</p>
-  <h2 style="font-size:clamp(2rem,5vw,4rem); font-weight:800; letter-spacing:-0.03em; margin-bottom:2rem; line-height:1;">Stop configuring.<br/>Start building.</h2>
-  <a href="#pricing" class="btn-primary" style="font-size:0.85rem; padding:1.2rem 2.5rem;">&#x2192; Get the Kit for $39</a>
-</div>
+<section class="closing-section">
+  <p class="closing-label">// READY?</p>
+  <h2 class="closing-title">Stop configuring.<br/>Start building.</h2>
+  <a href="#pricing" class="btn-primary closing-cta">&#x2192; Get the Kit for $39</a>
+</section>
 
 <footer>
   <span class="footer-logo">// DEPLOY_IN_A_DAY</span>
